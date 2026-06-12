@@ -1,0 +1,61 @@
+name: FriendlyTerminal
+options:
+  deploymentTarget:
+    macOS: "15.0"
+  xcodeVersion: "16"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  bundleIdPrefix: com.friendlyterminal
+  defaultConfig: Debug
+
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    from: "1.13.0"
+
+targets:
+  FriendlyTerminal:
+    type: application
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: FriendlyTerminal
+    entitlements:
+      path: FriendlyTerminal/FriendlyTerminal.entitlements
+    info:
+      path: FriendlyTerminal/Info.plist
+      properties:
+        CFBundleDisplayName: FriendlyTerminal
+        LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
+        NSHumanReadableCopyright: ""
+        NSSupportsAutomaticGraphicsSwitching: true
+        NSPrincipalClass: NSApplication
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.friendlyterminal.app
+        PRODUCT_NAME: FriendlyTerminal
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_HARDENED_RUNTIME: YES
+        GCC_OPTIMIZATION_LEVEL: "0"
+        SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+        ENABLE_TESTABILITY: YES
+      configs:
+        Release:
+          GCC_OPTIMIZATION_LEVEL: s
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+    dependencies:
+      - package: SwiftTerm
+        product: SwiftTerm
+
+schemes:
+  FriendlyTerminal:
+    build:
+      targets:
+        FriendlyTerminal: all
+    run:
+      config: Debug
+    archive:
+      config: Release
