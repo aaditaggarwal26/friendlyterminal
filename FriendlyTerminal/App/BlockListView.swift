@@ -6,21 +6,24 @@ struct BlockListView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                LazyVStack(alignment: .leading, spacing: 4) {
                     ForEach(session.blockStore.visibleBlocks) { block in
                         BlockView(block: block)
                             .id(block.id)
+                            .padding(.horizontal, 12)
                     }
 
                     if session.blockStore.currentBlock != nil {
                         RunningIndicatorView()
                             .id("running-indicator")
+                            .padding(.horizontal, 12)
                     }
 
-                    Color.clear.frame(height: 80)
+                    Color.clear.frame(height: 16)
                         .id("bottom-anchor")
                 }
-                .padding(.top, 8)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
             }
             .background(Color(nsColor: .textBackgroundColor))
             .onChange(of: session.blockStore.visibleBlocks.count) { _, _ in
