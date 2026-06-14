@@ -21,7 +21,7 @@ struct NLCommandBarView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 8) {
             if case .suggestion(let s) = nlState {
                 CommandApprovalChip(
                     command: s.command,
@@ -34,91 +34,144 @@ struct NLCommandBarView: View {
                 } onReject: {
                     nlState = .idle
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
+                .padding(.horizontal, 16)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
             if case .unavailable = nlState {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
+                        .font(.system(size: 12))
                     Text("Apple Intelligence not available. Enable in System Settings → Apple Intelligence.")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("Dismiss") { nlState = .idle }
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 6)
+                .padding(.horizontal, 20)
                 .transition(.opacity)
             }
 
             if case .error(let msg) = nlState {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.circle")
                         .foregroundStyle(.red)
+                        .font(.system(size: 12))
                     Text(msg)
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("Dismiss") { nlState = .idle }
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 6)
+                .padding(.horizontal, 20)
                 .transition(.opacity)
             }
 
-            Divider()
-
-            HStack(spacing: 8) {
-                Picker("Mode", selection: $mode) {
-                    ForEach(InputMode.allCases, id: \.self) { m in
-                        Text(m.rawValue).tag(m)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 130)
-                .help("Run: execute command directly. Ask AI: translate your request to a command first.")
-
-                ZStack(alignment: .leading) {
-                    if inputText.isEmpty {
-                        Text(mode == .run ? "Type a command…" : "Describe what you want to do…")
-                            .font(.system(size: 13, design: mode == .run ? .monospaced : .default))
-                            .foregroundStyle(.tertiary)
-                            .allowsHitTesting(false)
-                    }
-
-                    TextField("", text: $inputText)
-                        .font(.system(size: 13, design: mode == .run ? .monospaced : .default))
-                        .textFieldStyle(.plain)
-                        .focused($isFocused)
-                        .onSubmit { submit() }
-                }
-
-                if case .thinking = nlState {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                        .frame(width: 28, height: 28)
-                } else {
-                    Button(action: submit) {
-                        Image(systemName: mode == .run ? "return" : "sparkles")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(inputText.isEmpty ? Color.secondary : Color.white)
-                    }
-                    .buttonStyle(SendButtonStyle(disabled: inputText.isEmpty))
-                    .disabled(inputText.isEmpty)
-                    .keyboardShortcut(.return, modifiers: [])
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            chatInputBar
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(.bar)
         .animation(.easeInOut(duration: 0.2), value: nlState)
         .onAppear { isFocused = true }
+    }
+
+    private var chatInputBar: some View {
+        HStack(spacing: 10) {
+            modeToggle
+
+            ZStack(alignment: .leading) {
+                if inputText.isEmpty {
+                    Text(mode == .run ? "Run a command…" : "Ask anything — I'll find the right command…")
+                        .font(.system(size: 14, design: mode == .run ? .monospaced : .default))
+                        .foregroundStyle(.tertiary)
+                        .allowsHitTesting(false)
+                }
+
+                TextField("", text: $inputText, axis: .vertical)
+                    .font(.system(size: 14, design: mode == .run ? .monospaced : .default))
+                    .textFieldStyle(.plain)
+                    .focused($isFocused)
+                    .lineLimit(1...5)
+                    .onSubmit { submit() }
+            }
+
+            sendButton
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(nsColor: .controlBackgroundColor))
+                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isFocused ? Color.accentColor.opacity(0.5) : Color(nsColor: .separatorColor).opacity(0.6), lineWidth: 1)
+        )
+        .animation(.easeInOut(duration: 0.15), value: isFocused)
+    }
+
+    private var modeToggle: some View {
+        Menu {
+            Button {
+                withAnimation { mode = .run }
+            } label: {
+                Label("Run command", systemImage: "terminal")
+            }
+            Button {
+                withAnimation { mode = .ask }
+            } label: {
+                Label("Ask AI", systemImage: "sparkles")
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: mode == .run ? "terminal" : "sparkles")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(mode == .ask ? Color.accentColor : Color.secondary)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(Color(nsColor: .quaternaryLabelColor).opacity(0.5))
+            )
+        }
+        .buttonStyle(.plain)
+        .help(mode == .run ? "Run: execute command directly" : "Ask AI: translate plain English to a command")
+    }
+
+    @ViewBuilder
+    private var sendButton: some View {
+        if case .thinking = nlState {
+            ProgressView()
+                .scaleEffect(0.7)
+                .frame(width: 30, height: 30)
+        } else {
+            Button(action: submit) {
+                Image(systemName: mode == .run ? "arrow.up" : "sparkles")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(inputText.isEmpty ? Color.secondary : Color.white)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        Circle()
+                            .fill(inputText.isEmpty ? Color(nsColor: .quaternaryLabelColor) : Color.accentColor)
+                    )
+            }
+            .buttonStyle(.plain)
+            .disabled(inputText.isEmpty)
+            .animation(.easeInOut(duration: 0.15), value: inputText.isEmpty)
+        }
     }
 
     private func submit() {
@@ -142,34 +195,20 @@ struct NLCommandBarView: View {
                     switch result {
                     case .success(let suggestion):
                         withAnimation {
-                            nlState = .suggestion(suggestion)
+                            self.nlState = .suggestion(suggestion)
                         }
                     case .failure(let error):
                         withAnimation {
                             if let aiError = error as? AIError, case .unavailable = aiError {
-                                nlState = .unavailable
+                                self.nlState = .unavailable
                             } else {
-                                nlState = .error(error.localizedDescription)
+                                self.nlState = .error(error.localizedDescription)
                             }
                         }
                     }
                 }
             }
         }
-    }
-}
-
-private struct SendButtonStyle: ButtonStyle {
-    let disabled: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .frame(width: 28, height: 28)
-            .background(
-                Circle()
-                    .fill(disabled ? Color.secondary.opacity(0.2) : Color.accentColor)
-            )
-            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 
