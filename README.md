@@ -7,6 +7,23 @@ first-class support for interactive programs (vim, less, top, man, Claude Code�
 split panes, and optional on-device AI for translating plain English into commands
 and explaining errors.
 
+## Install
+
+**No coding required.** Just download the app:
+
+1. Go to the **[Releases page](https://github.com/aaditaggarwal26/friendlyterminal/releases/latest)**
+   and download **`FriendlyTerminal.dmg`**.
+2. Open the downloaded file and drag **FriendlyTerminal** into your **Applications** folder.
+3. The first time you open it, **right-click** (or Control-click) the app icon and
+   choose **Open**, then click **Open** in the dialog that appears.
+
+> **Why the right-click the first time?** macOS shows a warning for apps that
+> aren't signed by a paid Apple Developer account. Right-click → Open tells macOS
+> you trust it. You only have to do this once; after that it opens with a normal
+> double-click.
+
+That's it — no terminal commands, no Xcode.
+
 ## Features
 
 - **Command blocks** — each command and its output are grouped, with exit status,
@@ -26,69 +43,64 @@ and explaining errors.
   into shell commands and get plain-English explanations of errors, powered by
   Apple's on-device Foundation Models. No data leaves your machine.
 
-## Requirements
+## System requirements
 
-- **macOS 15.0 (Sequoia) or later** to build and run the app.
+- **macOS 15.0 (Sequoia) or later** to run the app.
 - **macOS 26 (Tahoe) or later with Apple Intelligence enabled** for the optional
-  AI features. The rest of the app works without them.
+  AI features. Everything else works without them.
+
+---
+
+## Building from source (for developers)
+
+You only need this section if you want to modify the code or build it yourself.
+
+### Requirements
+
 - **Xcode 16** (Swift 6 toolchain).
 - **[XcodeGen](https://github.com/yonaskolb/XcodeGen)** — the Xcode project is
-  generated from `project.yml` and is intentionally not checked into git.
+  generated from `project.yml` and is intentionally not checked into git:
+  ```sh
+  brew install xcodegen
+  ```
+  SwiftTerm (the terminal emulator) is fetched automatically by Swift Package
+  Manager when you build.
 
-## Installation
+### Quick build
 
-### 1. Install the build tools
-
-XcodeGen is the only extra dependency. The easiest way is [Homebrew](https://brew.sh):
-
-```sh
-brew install xcodegen
-```
-
-SwiftTerm (the terminal emulator) is fetched automatically by Swift Package
-Manager when you build — you don't need to install it yourself.
-
-### 2. Clone the repository
+Clone the repo and run the packaging script, which generates the project, builds
+a Release app, and produces `build/FriendlyTerminal.dmg`:
 
 ```sh
 git clone https://github.com/aaditaggarwal26/friendlyterminal.git
 cd friendlyterminal
+./scripts/build-and-package.sh
 ```
 
-### 3. Generate the Xcode project
+### Developing in Xcode
 
-The `.xcodeproj` is gitignored and produced from `project.yml`, so generate it
-before building (and re-run this any time `project.yml` changes):
+To work on the code interactively, generate the project and open it (re-run
+`xcodegen generate` whenever `project.yml` changes):
 
 ```sh
 xcodegen generate
-```
-
-### 4. Build and run
-
-**Option A — Xcode (recommended):**
-
-```sh
 open FriendlyTerminal.xcodeproj
 ```
 
 Then press **⌘R** to build and run.
 
-**Option B — command line:**
+### Cutting a release
+
+Pushing a version tag triggers the GitHub Actions workflow in
+`.github/workflows/release.yml`, which builds the app and attaches a downloadable
+`.dmg` to a new GitHub Release:
 
 ```sh
-xcodebuild \
-  -project FriendlyTerminal.xcodeproj \
-  -scheme FriendlyTerminal \
-  -configuration Debug \
-  -destination 'platform=macOS' \
-  build
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-The built app lands in Xcode's DerivedData (`Build/Products/Debug/FriendlyTerminal.app`);
-the exact path is printed at the end of the build. Open it with `open` or from Finder.
-
-## Project structure
+### Project structure
 
 - `FriendlyTerminal/App/` — SwiftUI views and the AppKit terminal bridge.
 - `FriendlyTerminal/Models/` — session, workspace, block-store, and the
@@ -97,7 +109,7 @@ the exact path is printed at the end of the build. Open it with `open` or from F
 - `FriendlyTerminal/Resources/` — bundled shell-integration script and assets.
 - `project.yml` — the XcodeGen spec the `.xcodeproj` is generated from.
 
-## How it works
+### How it works
 
 FriendlyTerminal spawns a normal login zsh and sources a small shell-integration
 script that emits standard OSC escape sequences (`133;A/B/C/D` for prompt/command/

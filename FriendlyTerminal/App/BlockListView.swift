@@ -411,7 +411,9 @@ struct FriendlyButtonStyle: ButtonStyle {
     }
 }
 
-#Preview {
+#if DEBUG
+@MainActor
+private func blockListPreviewSession() -> SessionState {
     let session = SessionState()
     let block = CommandBlock(command: "ls -la", cwd: "/Users/test", sessionID: UUID())
     block.plainText = "total 48\ndrwxr-xr-x  12 user  staff   384 Jun 13 10:00 .\ndrwxr-xr-x  15 user  staff   480 Jun 12 09:00 .."
@@ -423,7 +425,12 @@ struct FriendlyButtonStyle: ButtonStyle {
     failBlock.exitCode = 1
     session.blockStore.appendForPreview(failBlock)
 
-    return BlockListView()
-        .environment(session)
+    return session
+}
+
+#Preview {
+    BlockListView()
+        .environment(blockListPreviewSession())
         .frame(width: 800, height: 500)
 }
+#endif
