@@ -35,19 +35,45 @@ final class SessionState: Identifiable {
     let blockStore: BlockStore = BlockStore()
     var isTUIActive: Bool = false
 
-    // Interactivity signals from the running command, used to decide when to
-    // switch to the live terminal (see TerminalContainerView).
     var altScreenOn: Bool = false
     var bracketedPasteOn: Bool = false
 
     var pendingCommandText: String = ""
 
-    /// Text the command bar should adopt, plus a token the bar watches so the
-    /// same command can be requested twice in a row.
     private(set) var commandBarDraft: String = ""
     private(set) var commandBarRequestToken: Int = 0
 
     var sendToShell: ((String) -> Void)?
+
+    var isClaudeRunning: Bool {
+        guard isTUIActive else { return false }
+        return Self.isClaudeCommand(blockStore.currentBlock?.command ?? "")
+    }
+
+    var currentClaudeCommand: String? {
+        isClaudeRunning ? blockStore.currentBlock?.command : nil
+    }
+
+    var claudeRunsWithDangerousFlag: Bool {
+        currentClaudeCommand?.contains("--dangerously-skip-permissions") ?? false
+    }
+
+    func sendRaw(_ text: String) {
+        sendToShell?(text)
+    }
+
+    static func isClaudeCommand(_ command: String) -> Bool {
+        let lastStage = command.split(separator: "|").last.map(String.init) ?? command
+        let tokens = lastStage
+            .split(whereSeparator: { $0 == " " || $0 == "\t" })
+            .map(String.init)
+        for token in tokens {
+            if token.contains("=") { continue }
+            if ["sudo", "command", "exec", "time", "env"].contains(token) { continue }
+            return (token as NSString).lastPathComponent.lowercased() == "claude"
+        }
+        return false
+    }
 
     func prefillCommand(_ command: String) {
         commandBarDraft = command
