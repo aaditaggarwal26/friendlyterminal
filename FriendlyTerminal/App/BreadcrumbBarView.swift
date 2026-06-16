@@ -48,6 +48,25 @@ struct BreadcrumbBarView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .coachmarkTarget(Coachmark.breadcrumbs)
 
+            if let git = session.gitStatus {
+                Divider().frame(height: 14)
+
+                HStack(spacing: 3) {
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.system(size: 10, weight: .medium))
+                    Text(git.branch)
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                    if git.isDirty {
+                        Text("·\(git.uncommittedCount)")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.orange)
+                    }
+                }
+                .foregroundStyle(.secondary)
+                .help(git.isDirty ? "\(git.uncommittedCount) uncommitted file(s)" : "Clean working tree")
+            }
+
             Button {
                 session.refreshFileItems()
             } label: {
