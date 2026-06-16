@@ -1,9 +1,5 @@
 import SwiftUI
 
-/// Shown in the sidebar while in normal (block) mode: a friendly menu of common
-/// command categories. Picking a category lists its commands; picking a command
-/// drops it into the command bar so the user can run or tweak it. Which
-/// categories appear is user-configurable via the gear button.
 struct CommandHelpView: View {
     @Environment(SessionState.self) private var session
     @State private var selected: CommandCategory?
@@ -19,16 +15,12 @@ struct CommandHelpView: View {
     private var isDrilledIn: Bool { selected != nil || showingTutorial }
     private var hasAnyEntries: Bool { settings.tutorialVisible || !visibleCategories.isEmpty }
 
-    /// One matching command plus the category it came from, for search results.
     private struct SearchHit: Identifiable {
         let id = UUID()
         let category: CommandCategory
         let item: CommandHelpItem
     }
 
-    /// Commands matching the search term by command name, description, or the
-    /// name of their category. Searches every category, not just the shown ones,
-    /// so search stays a reliable way to find anything.
     private var searchHits: [SearchHit] {
         let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
         guard !query.isEmpty else { return [] }
@@ -72,7 +64,6 @@ struct CommandHelpView: View {
             HelpCategorySettingsView()
         }
         .onChange(of: showingSettings) { _, isOpen in
-            // If the open item got hidden while in settings, pop back out.
             if !isOpen {
                 if let s = selected, !settings.isEnabled(s.id) { selected = nil }
                 if showingTutorial, !settings.tutorialVisible { showingTutorial = false }
@@ -166,7 +157,7 @@ struct CommandHelpView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 20))
                     .foregroundStyle(.tertiary)
-                Text("No commands match “\(searchText)”.")
+                Text("No commands match "\(searchText)".")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -270,71 +261,108 @@ struct CommandHelpView: View {
     private func commandList(_ category: CommandCategory) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Tap a command to drop it into the command bar.")
+                Text(category.name == "AI"
+                     ? "Tap to fill the command bar, or tap ▶ to run instantly."
+                     : "Tap a command to drop it into the command bar.")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                     .padding(.bottom, 2)
 
                 ForEach(category.commands) { item in
-                    commandButton(item)
+                    commandButton(item, launchAction: directLaunchAction(for: item, in: category))
                 }
             }
             .padding(12)
         }
     }
 
-    /// A tappable command row. Shown in a category's list and in search results;
-    /// search results pass `categoryName` to show which group the command is in.
-    private func commandButton(_ item: CommandHelpItem, categoryName: String? = nil) -> some View {
-        Button {
-            session.prefillCommand(item.command)
-        } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    if item.isDangerous {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 9))
-                            .foregroundStyle(.orange)
-                    }
-                    Text(item.command)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.primary)
-                    if let categoryName {
-                        Spacer(minLength: 4)
-                        Text(categoryName)
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(
-                                Capsule().fill(Color(nsColor: .quaternaryLabelColor).opacity(0.5))
-                            )
-                    }
-                }
-                Text(item.detail)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(item.isDangerous
-                          ? Color.orange.opacity(0.12)
-                          : Color(nsColor: .quaternaryLabelColor).opacity(0.25))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(item.isDangerous ? Color.orange.opacity(0.4) : Color.clear, lineWidth: 1)
-            )
+    private func directLaunchAction(
+        for item: CommandHelpItem,
+        in category: CommandCategory
+    ) -> (() -> Void)? {
+        guard category.name == "AI",
+              !item.isDangerous,
+              !item.command.contains("\"")
+        else { return nil }
+        return { [session] in
+            session.executeCommand(item.command)
         }
-        .buttonStyle(.plain)
+    }
+
+    private func commandButton(
+        _ item: CommandHelpItem,
+        categoryName: String? = nil,
+        launchAction: (() -> Void)? = nil
+    ) -> some View {
+        HStack(spacing: 6) {
+            Button {
+                session.prefillCommand(item.command)
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        if item.isDangerous {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.orange)
+                        }
+                        Text(item.command)
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.primary)
+                        if let categoryName {
+                            Spacer(minLength: 4)
+                            Text(categoryName)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(
+                                    Capsule().fill(Color(nsColor: .quaternaryLabelColor).opacity(0.5))
+                                )
+                        }
+                    }
+                    Text(item.detail)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(item.isDangerous
+                              ? Color.orange.opacity(0.12)
+                              : Color(nsColor: .quaternaryLabelColor).opacity(0.25))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(item.isDangerous ? Color.orange.opacity(0.4) : Color.clear, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+
+            if let launchAction {
+                Button(action: launchAction) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 28, height: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.accentColor.opacity(0.12))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .help("Run this command now")
+            }
+        }
     }
 }
 
-/// Persists which command categories the user wants to see in the help menu.
 @Observable
 @MainActor
 final class CommandHelpSettings {
@@ -351,7 +379,6 @@ final class CommandHelpSettings {
         } else {
             enabledNames = Set(CommandCategory.defaultEnabledNames)
         }
-        // Defaults to shown (including for existing users, since the key is new).
         tutorialVisible = UserDefaults.standard.object(forKey: tutorialKey) as? Bool ?? true
     }
 
@@ -372,7 +399,6 @@ final class CommandHelpSettings {
     }
 }
 
-/// Sheet that lets the user check which command groups appear.
 struct HelpCategorySettingsView: View {
     @Environment(\.dismiss) private var dismiss
     private let settings = CommandHelpSettings.shared
@@ -453,7 +479,6 @@ struct CommandCategory: Identifiable {
     let icon: String
     let commands: [CommandHelpItem]
 
-    /// Groups shown by default the first time the app runs.
     static let defaultEnabledNames = ["Navigate", "Files", "GitHub", "AI", "Search", "System", "Network"]
 
     static let all: [CommandCategory] = [
@@ -607,8 +632,6 @@ struct CommandHelpItem: Identifiable {
     let command: String
     let detail: String
     let isDangerous: Bool
-    /// Extra search terms (synonyms / related words) that never display but make
-    /// the command findable — e.g. "remove delete erase" for `rm`.
     let keywords: String
 
     init(_ command: String, _ detail: String, dangerous: Bool = false, keywords: String = "") {
