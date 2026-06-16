@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct NLCommandBarView: View {
     @Environment(SessionState.self) private var session
@@ -8,6 +9,8 @@ struct NLCommandBarView: View {
     @State private var nlState: NLState = .idle
     @State private var textFieldWidth: CGFloat = 0
     @FocusState private var isFocused: Bool
+    @State private var dangerousCommandPending: String? = nil
+    @State private var isDroppingFile: Bool = false
 
     enum InputMode: String, CaseIterable {
         case run = "Run"
@@ -81,7 +84,42 @@ struct NLCommandBarView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(.bar)
+        .overlay(isDroppingFile ? Color.accentColor.opacity(0.1) : Color.clear)
         .animation(.easeInOut(duration: 0.2), value: nlState)
+        .onDrop(of: [.fileURL], isTargeted: $isDroppingFile) { providers in
+            for provider in providers {
+                _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                    guard let url else { return }
+                    let path = url.path
+                    let safe = path.contains(" ")
+                        ? "'\(path.replacingOccurrences(of: "'", with: "'\\''"))'"
+                        : path
+                    DispatchQueue.main.async {
+                        self.inputText = self.inputText.isEmpty ? safe : self.inputText + " " + safe
+                        self.isFocused = true
+                        self.mode = .run
+                    }
+                }
+            }
+            return true
+        }
+        .alert("Dangerous Command", isPresented: Binding(
+            get: { dangerousCommandPending != nil },
+            set: { if !$0 { dangerousCommandPending = nil } }
+        )) {
+            Button("Cancel", role: .cancel) { dangerousCommandPending = nil }
+            Button("Run Anyway", role: .destructive) {
+                if let cmd = dangerousCommandPending {
+                    session.executeCommand(cmd)
+                    inputText = ""
+                }
+                dangerousCommandPending = nil
+            }
+        } message: {
+            if let cmd = dangerousCommandPending {
+                Text("\"\(cmd)\" can permanently delete files or modify system settings. This cannot be undone.")
+            }
+        }
         .onAppear { isFocused = true }
         .onChange(of: session.isTUIActive) { _, tuiActive in
             // Yield keyboard focus to the live terminal while a full-screen
@@ -203,12 +241,27 @@ struct NLCommandBarView: View {
         }
     }
 
+    private func isDangerousCommand(_ cmd: String) -> Bool {
+        let lower = cmd.lowercased()
+        let patterns = [
+            "rm -rf", "rm -fr", "rm -r", "sudo rm",
+            "mkfs", "dd if=", "fdisk", "shred",
+            "> /dev/", "chmod 000",
+        ]
+        return patterns.contains { lower.contains($0) }
+            || (lower.hasPrefix("sudo ") && (lower.contains("rm") || lower.contains("dd") || lower.contains("mkfs")))
+    }
+
     private func submit() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
 
         switch mode {
         case .run:
+            if isDangerousCommand(text) {
+                dangerousCommandPending = text
+                return
+            }
             session.executeCommand(text)
             inputText = ""
 
