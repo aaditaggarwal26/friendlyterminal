@@ -144,6 +144,7 @@ struct NLCommandBarView: View {
                 .stroke(isFocused ? Color.accentColor.opacity(0.5) : Color(nsColor: .separatorColor).opacity(0.6), lineWidth: 1)
         )
         .animation(.easeInOut(duration: 0.15), value: isFocused)
+        .coachmarkTarget(Coachmark.commandBar)
     }
 
     private var modeToggle: some View {
@@ -176,6 +177,7 @@ struct NLCommandBarView: View {
         }
         .buttonStyle(.plain)
         .help(mode == .run ? "Run: execute command directly" : "Ask AI: translate plain English to a command")
+        .coachmarkTarget(Coachmark.modeToggle)
     }
 
     @ViewBuilder

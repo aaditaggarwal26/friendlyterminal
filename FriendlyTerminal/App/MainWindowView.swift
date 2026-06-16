@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainWindowView: View {
     @Environment(Workspace.self) private var workspace
+    @State private var onboarding = OnboardingCoordinator()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,6 +29,22 @@ struct MainWindowView: View {
         }
         .frame(minWidth: 700, minHeight: 400)
         .background(Color(nsColor: .textBackgroundColor))
+        .overlayPreferenceValue(CoachmarkAnchorKey.self) { anchors in
+            GeometryReader { proxy in
+                if let step = onboarding.currentStep {
+                    CoachmarkOverlay(
+                        step: step,
+                        targetRect: step.targetID.flatMap { anchors[$0] }.map { proxy[$0] },
+                        stepIndex: onboarding.stepIndex,
+                        stepCount: onboarding.steps.count,
+                        isLastStep: onboarding.isLastStep,
+                        onNext: { onboarding.next() },
+                        onBack: { onboarding.back() },
+                        onSkip: { onboarding.finish() }
+                    )
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .sendToShell)) { note in
             if let text = note.object as? String {
                 workspace.focused.sendToShell?(text)
@@ -39,8 +56,14 @@ struct MainWindowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .newPane)) { _ in
             withAnimation(.easeInOut(duration: 0.2)) { workspace.addPane() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .startOnboarding)) { _ in
+            // Make sure the controls the tour points at are on screen.
+            workspace.sidebarVisible = true
+            onboarding.start()
+        }
         .onAppear {
             workspace.focused.refreshFileItems()
+            onboarding.startIfFirstLaunch()
         }
     }
 }

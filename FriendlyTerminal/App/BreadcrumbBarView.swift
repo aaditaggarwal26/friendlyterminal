@@ -46,6 +46,7 @@ struct BreadcrumbBarView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .coachmarkTarget(Coachmark.breadcrumbs)
 
             Button {
                 session.refreshFileItems()
@@ -65,6 +66,7 @@ struct BreadcrumbBarView: View {
             .buttonStyle(.plain)
             .disabled(!workspace.canAddPane)
             .help("Add another terminal")
+            .coachmarkTarget(Coachmark.addPane)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)

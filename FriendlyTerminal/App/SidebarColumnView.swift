@@ -10,6 +10,7 @@ struct SidebarColumnView: View {
         VStack(spacing: 0) {
             FileSidebarView()
                 .frame(maxHeight: .infinity)
+                .coachmarkTarget(Coachmark.fileSidebar)
 
             Divider()
 
@@ -21,6 +22,7 @@ struct SidebarColumnView: View {
                 }
             }
             .frame(maxHeight: .infinity, alignment: .top)
+            .coachmarkTarget(Coachmark.commandHelp)
             .transition(.opacity)
         }
         .animation(.easeInOut(duration: 0.2), value: session.isTUIActive)

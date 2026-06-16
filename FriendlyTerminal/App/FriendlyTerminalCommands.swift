@@ -36,6 +36,12 @@ struct FriendlyTerminalCommands: Commands {
             }
             .keyboardShortcut("\\", modifiers: .command)
         }
+
+        CommandGroup(replacing: .help) {
+            Button("Show Welcome Tour") {
+                NotificationCenter.default.post(name: .startOnboarding, object: nil)
+            }
+        }
     }
 }
 
@@ -43,4 +49,5 @@ extension Notification.Name {
     static let sendToShell = Notification.Name("FT.sendToShell")
     static let toggleSidebar = Notification.Name("FT.toggleSidebar")
     static let newPane = Notification.Name("FT.newPane")
+    static let startOnboarding = Notification.Name("FT.startOnboarding")
 }
