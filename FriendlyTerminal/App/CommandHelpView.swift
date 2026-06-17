@@ -479,7 +479,7 @@ struct CommandCategory: Identifiable {
     let icon: String
     let commands: [CommandHelpItem]
 
-    static let defaultEnabledNames = ["Navigate", "Files", "GitHub", "AI", "Search", "System", "Network"]
+    static let defaultEnabledNames = ["Navigate", "Files", "GitHub", "AI", "Search", "System", "Network", "npm", "pip"]
 
     static let all: [CommandCategory] = [
         CommandCategory(name: "Navigate", icon: "folder", commands: [
@@ -575,18 +575,51 @@ struct CommandCategory: Identifiable {
             CommandHelpItem("code .", "Open this folder in VS Code", keywords: "vscode vs code editor open ide"),
             CommandHelpItem("open -e file.txt", "Open a file in TextEdit", keywords: "textedit edit open gui write"),
         ]),
-        CommandCategory(name: "Node", icon: "shippingbox", commands: [
-            CommandHelpItem("npm install", "Install a project's dependencies", keywords: "npm install dependencies packages node modules setup"),
-            CommandHelpItem("npm run dev", "Start the dev server", keywords: "dev server run start npm development localhost"),
-            CommandHelpItem("npm start", "Run the project", keywords: "start run npm node launch"),
-            CommandHelpItem("npx create-vite", "Run a tool without installing it", keywords: "npx scaffold create run vite generator bootstrap"),
-            CommandHelpItem("node file.js", "Run a JavaScript file", keywords: "node run javascript js execute"),
+        CommandCategory(name: "npm", icon: "shippingbox", commands: [
+            CommandHelpItem("npm install", "Install all dependencies listed in package.json", keywords: "npm install dependencies packages node modules setup i"),
+            CommandHelpItem("npm install package", "Add a package to your project", keywords: "npm install add package dependency library i"),
+            CommandHelpItem("npm install -g package", "Install a package globally (available everywhere)", keywords: "npm install global system-wide tool cli -g"),
+            CommandHelpItem("npm install --save-dev package", "Add a development-only dependency", keywords: "npm install dev devdependency save-dev -D testing build tooling"),
+            CommandHelpItem("npm uninstall package", "Remove a package from your project", keywords: "npm uninstall remove delete package dependency"),
+            CommandHelpItem("npm update", "Update packages to their latest allowed versions", keywords: "npm update upgrade packages latest"),
+            CommandHelpItem("npm outdated", "See which packages have newer versions", keywords: "npm outdated old updates versions check"),
+            CommandHelpItem("npm run dev", "Start the development server", keywords: "npm run dev server development localhost start"),
+            CommandHelpItem("npm run build", "Build the project for production", keywords: "npm run build production compile bundle"),
+            CommandHelpItem("npm start", "Run the project", keywords: "npm start run launch node"),
+            CommandHelpItem("npm test", "Run the project's tests", keywords: "npm test tests testing check run"),
+            CommandHelpItem("npm run script", "Run a script defined in package.json", keywords: "npm run script task command package.json"),
+            CommandHelpItem("npm init -y", "Create a new package.json with default settings", keywords: "npm init create package.json new project setup"),
+            CommandHelpItem("npm ci", "Clean install exactly from package-lock.json", keywords: "npm ci clean install lockfile reproducible reliable"),
+            CommandHelpItem("npm list", "Show the packages you've installed", keywords: "npm list ls installed packages dependencies show"),
+            CommandHelpItem("npm audit", "Check dependencies for security issues", keywords: "npm audit security vulnerabilities check safety"),
+            CommandHelpItem("npm audit fix", "Automatically fix vulnerable dependencies", keywords: "npm audit fix security vulnerabilities repair"),
+            CommandHelpItem("npm cache clean --force", "Clear npm's cache when things act up", keywords: "npm cache clean clear reset force fix"),
+            CommandHelpItem("npx create-vite", "Run a tool once without installing it", keywords: "npx scaffold create run vite generator bootstrap"),
+        ]),
+        CommandCategory(name: "pip", icon: "cube.box", commands: [
+            CommandHelpItem("pip install package", "Install a Python package", keywords: "pip install package python dependency module library add"),
+            CommandHelpItem("pip install -r requirements.txt", "Install everything listed in requirements.txt", keywords: "pip install requirements dependencies all batch file"),
+            CommandHelpItem("pip install --upgrade package", "Upgrade a package to the latest version", keywords: "pip install upgrade update latest newer package -U"),
+            CommandHelpItem("pip install package==1.2.3", "Install a specific version of a package", keywords: "pip install version specific pin exact package"),
+            CommandHelpItem("pip uninstall package", "Remove a package", keywords: "pip uninstall remove delete package"),
+            CommandHelpItem("pip list", "List the packages you've installed", keywords: "pip list installed packages show"),
+            CommandHelpItem("pip show package", "Show details about a package", keywords: "pip show details info package version"),
+            CommandHelpItem("pip freeze", "List installed packages with exact versions", keywords: "pip freeze list versions requirements export"),
+            CommandHelpItem("pip freeze > requirements.txt", "Save your dependencies to requirements.txt", keywords: "pip freeze requirements save export dependencies lock"),
+            CommandHelpItem("pip check", "Check that installed packages are compatible", keywords: "pip check verify compatible dependencies conflicts"),
+            CommandHelpItem("python3 -m pip install --upgrade pip", "Update pip itself to the latest version", keywords: "pip upgrade update self latest python module"),
+            CommandHelpItem("pip cache purge", "Clear pip's download cache", keywords: "pip cache purge clear clean reset"),
         ]),
         CommandCategory(name: "Python", icon: "chevron.left.forwardslash.chevron.right", commands: [
             CommandHelpItem("python3 file.py", "Run a Python script", keywords: "python run script execute py"),
             CommandHelpItem("python3 -m venv venv", "Create a virtual environment", keywords: "venv virtual environment python isolate create"),
             CommandHelpItem("source venv/bin/activate", "Turn on the virtual environment", keywords: "activate venv virtual environment enable source python"),
-            CommandHelpItem("pip install package", "Install a Python package", keywords: "pip install package python dependency module library"),
+            CommandHelpItem("python3 -m http.server", "Start a simple local web server", keywords: "python server http localhost serve web"),
+        ]),
+        CommandCategory(name: "Node", icon: "hexagon", commands: [
+            CommandHelpItem("node file.js", "Run a JavaScript file", keywords: "node run javascript js execute"),
+            CommandHelpItem("node --version", "Check which Node version is installed", keywords: "node version check installed"),
+            CommandHelpItem("npx tool", "Run a command-line tool without installing it", keywords: "npx run tool once execute"),
         ]),
         CommandCategory(name: "Homebrew", icon: "mug", commands: [
             CommandHelpItem("brew install name", "Install an app or tool", keywords: "brew homebrew install package app tool add"),
