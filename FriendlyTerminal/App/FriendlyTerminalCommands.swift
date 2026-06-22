@@ -19,6 +19,13 @@ struct FriendlyTerminalCommands: Commands {
 
             Divider()
 
+            Button("Undo Last Command") {
+                NotificationCenter.default.post(name: .undoLastCommand, object: nil)
+            }
+            .keyboardShortcut("z", modifiers: .command)
+
+            Divider()
+
             Button("Interrupt (Ctrl-C)") {
                 NotificationCenter.default.post(name: .sendToShell, object: "\u{03}")
             }
@@ -50,4 +57,5 @@ extension Notification.Name {
     static let toggleSidebar = Notification.Name("FT.toggleSidebar")
     static let newPane = Notification.Name("FT.newPane")
     static let startOnboarding = Notification.Name("FT.startOnboarding")
+    static let undoLastCommand = Notification.Name("FT.undoLastCommand")
 }

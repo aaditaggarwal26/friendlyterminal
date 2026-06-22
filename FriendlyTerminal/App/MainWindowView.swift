@@ -57,9 +57,11 @@ struct MainWindowView: View {
             withAnimation(.easeInOut(duration: 0.2)) { workspace.addPane() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .startOnboarding)) { _ in
-            // Make sure the controls the tour points at are on screen.
             workspace.sidebarVisible = true
             onboarding.start()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .undoLastCommand)) { _ in
+            workspace.focused.undoLastCommand()
         }
         .onAppear {
             workspace.focused.refreshFileItems()
