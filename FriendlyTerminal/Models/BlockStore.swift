@@ -41,6 +41,10 @@ final class BlockStore {
 
     var lastFinishedBlock: CommandBlock? { blocks.last(where: { !$0.isRunning }) }
 
+    var lastUndoableBlock: CommandBlock? {
+        blocks.last { $0.undoPlan != nil && !$0.isUndone }
+    }
+
     var visibleBlocks: [CommandBlock] { blocks }
 
     func block(with id: UUID) -> CommandBlock? { blocks.first { $0.id == id } }
