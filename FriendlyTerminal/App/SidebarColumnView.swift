@@ -17,7 +17,10 @@ struct SidebarColumnView: View {
                 } else if session.isTUIActive {
                     InteractiveHintView()
                 } else {
-                    CommandHelpView()
+                    VStack(spacing: 0) {
+                        ProjectCommandsView()
+                        CommandHelpView()
+                    }
                 }
             }
             .frame(maxHeight: .infinity, alignment: .top)
