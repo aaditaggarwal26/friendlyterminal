@@ -5,6 +5,7 @@ struct BreadcrumbBarView: View {
     @Environment(Workspace.self) private var workspace
     @State private var showingDoctorSheet = false
     @State private var showingGitPanel = false
+    @State private var showingProcessPanel = false
     private let checker = ClaudeInstallChecker.shared
 
     var body: some View {
@@ -80,6 +81,15 @@ struct BreadcrumbBarView: View {
             claudeButton
 
             Button {
+                showingProcessPanel = true
+            } label: {
+                Image(systemName: "bolt.horizontal.circle")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("What's running on this machine")
+
+            Button {
                 session.refreshFileItems()
             } label: {
                 Image(systemName: "arrow.clockwise")
@@ -112,6 +122,9 @@ struct BreadcrumbBarView: View {
         }
         .onChange(of: showingGitPanel) { _, open in
             if !open { session.refreshGitStatus() }
+        }
+        .sheet(isPresented: $showingProcessPanel) {
+            ProcessPanelView()
         }
         .onAppear {
             checker.check()
