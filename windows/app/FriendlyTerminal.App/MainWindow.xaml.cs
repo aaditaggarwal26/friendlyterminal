@@ -1,5 +1,7 @@
 using System.IO;
 using FriendlyTerminal.App.Pty;
+using FriendlyTerminal.App.Views;
+using FriendlyTerminal.Core.ShellIntegration;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
 
@@ -7,11 +9,21 @@ namespace FriendlyTerminal.App;
 
 public sealed partial class MainWindow : Window
 {
+    private readonly SessionState _session = new();
+    private readonly OscParser _osc = new();
     private PtyConnection? _pty;
 
     public MainWindow()
     {
         InitializeComponent();
+
+        Sidebar.Session = _session;
+        _session.SendToShell = text => _pty?.WriteInput(text);
+        _osc.WorkingDirectoryChanged += OnCwdChanged;
+
+        // Seed the file panel before the first OSC arrives so it isn't blank on launch.
+        _session.SetCurrentDirectory(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+
         Terminal.Loaded += OnTerminalLoaded;
         Closed += (_, _) => _pty?.Dispose();
     }
@@ -38,17 +50,33 @@ public sealed partial class MainWindow : Window
 
     private void StartShell()
     {
-        _pty = new PtyConnection("powershell.exe", 120, 30);
+        // Source the shell-integration profile so the prompt emits OSC 9;9 (cwd) + 133
+        // markers the OscParser reads. Falls back to a plain shell if the file is missing.
+        var profilePath = Path.Combine(AppContext.BaseDirectory, "Shell", "Microsoft.PowerShell_profile.ps1");
+        var command = File.Exists(profilePath)
+            ? $"powershell.exe -NoLogo -NoExit -Command \". '{profilePath.Replace("'", "''")}'\""
+            : "powershell.exe -NoLogo -NoExit";
+
+        _pty = new PtyConnection(command, 120, 30);
         _pty.OutputReceived += OnPtyOutput;
         _pty.Start();
     }
 
     private void OnPtyOutput(byte[] data)
     {
+        // Feed the parser a copy of the stream for cwd tracking; raw bytes still go to xterm.
+        _osc.Feed(data, data.Length);
+
         var b64 = Convert.ToBase64String(data);
         DispatcherQueue.TryEnqueue(async () =>
         {
             await Terminal.CoreWebView2.ExecuteScriptAsync($"window.ptyWrite('{b64}')");
         });
+    }
+
+    private void OnCwdChanged(string path)
+    {
+        // Raised on the PTY reader thread; marshal to the UI thread before touching state.
+        DispatcherQueue.TryEnqueue(() => _session.SetCurrentDirectory(path));
     }
 }

@@ -1,0 +1,93 @@
+<UserControl
+    x:Class="FriendlyTerminal.App.Views.CommandHelpView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Padding="12,8" ColumnSpacing="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button x:Name="BackButton" Click="OnBack" Padding="6" Visibility="Collapsed" ToolTipService.ToolTip="Back">
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="11" Glyph="&#xE76B;" />
+            </Button>
+            <TextBlock x:Name="TitleText" Grid.Column="1" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Text="Help with commands" />
+        </Grid>
+
+        <TextBox x:Name="SearchBox" Grid.Row="1" Margin="12,0,12,8" PlaceholderText="Search commands" TextChanged="OnSearchChanged" />
+
+        <GridView
+            x:Name="CategoryGrid"
+            Grid.Row="2"
+            Padding="12,0,12,12"
+            IsItemClickEnabled="True"
+            ItemClick="OnCategoryClick"
+            SelectionMode="None">
+            <GridView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" />
+                </ItemsPanelTemplate>
+            </GridView.ItemsPanel>
+            <GridView.ItemContainerStyle>
+                <Style TargetType="GridViewItem">
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="3" />
+                </Style>
+            </GridView.ItemContainerStyle>
+            <GridView.ItemTemplate>
+                <DataTemplate>
+                    <Border Width="76" Height="62" Background="{ThemeResource ControlFillColorSecondary}" CornerRadius="8">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="3">
+                            <FontIcon HorizontalAlignment="Center" FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="{Binding Glyph}" />
+                            <TextBlock HorizontalAlignment="Center" FontSize="10" MaxLines="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </GridView.ItemTemplate>
+        </GridView>
+
+        <ListView
+            x:Name="CommandList"
+            Grid.Row="2"
+            Padding="12,0,12,12"
+            IsItemClickEnabled="True"
+            ItemClick="OnCommandClick"
+            SelectionMode="None"
+            Visibility="Collapsed">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="MinHeight" Value="0" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,0,0,4" Padding="8,6" Background="{ThemeResource ControlFillColorSecondary}" ColumnSpacing="6" CornerRadius="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon VerticalAlignment="Center" FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="10" Foreground="Orange" Glyph="&#xE7BA;" Visibility="{Binding DangerVisibility}" />
+                                <TextBlock FontFamily="Consolas" FontSize="11" Text="{Binding Command}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <TextBlock FontSize="10" Opacity="0.7" Text="{Binding Detail}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Padding="5,1" VerticalAlignment="Top" Background="{ThemeResource ControlFillColorTertiary}" CornerRadius="8" Visibility="{Binding BadgeVisibility}">
+                            <TextBlock FontSize="9" Text="{Binding Badge}" />
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</UserControl>
